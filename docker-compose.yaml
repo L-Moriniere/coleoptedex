@@ -12,11 +12,13 @@ services:
     ports:
       - "8000:8000" # Expose le port 8000 pour accéder à l'API
     volumes:
-      - ./:/app # Monte le code source dans le conteneur
+      - ./:/app:rw # Monte le code source dans le conteneur
+      - /app/vendor
     depends_on:
       - database # Démarre après la base de données
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD:-!c0L3o!}@database:5432/${POSTGRES_DB:-coleoptedex} # URL de connexion à la base
+    entrypoint: ["sh", "-c", "composer install --no-interaction --prefer-dist --optimize-autoloader && php -S 0.0.0.0:8000 -t public"]
 
   frontend:
     # Service pour le frontend React
@@ -28,9 +30,11 @@ services:
     ports:
       - "3000:3000" # Expose le port 3000 pour accéder à l'interface React
     volumes:
-      - ./frontend:/app # Monte le code source du frontend
+      - ./frontend:/app:rw # Monte le code source du frontend
+      - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true # Permet le hot reload sur certains systèmes
+    entrypoint: ["sh", "-c", "npm install && npm run dev -- --host"]
 
   database:
     # Service pour la base de données PostgreSQL
